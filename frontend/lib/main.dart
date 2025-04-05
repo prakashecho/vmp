@@ -10,6 +10,14 @@ import 'screens/community_hub_screen.dart';
 import 'screens/gallery_screen.dart';
 import 'screens/contact_screen.dart';
 import 'screens/not_found_screen.dart';
+import 'screens/news_archive_screen.dart'; // <-- IMPORT NEW SCREEN
+import 'screens/news_detail_screen.dart';  // <-- IMPORT NEW SCREEN
+
+import 'screens/job_board_screen.dart'; // <-- IMPORT NEW SCREEN
+import 'screens/job_detail_screen.dart'; // <-- IMPORT NEW SCREEN
+import 'screens/post_job_screen.dart';   // <-- IMPORT NEW SCREEN
+
+
 
 // --- Define Colors (constants maybe) ---
 // These colors are used in the ThemeData below
@@ -56,6 +64,40 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/contact', // '/contact' maps to ContactScreen
       builder: (BuildContext context, GoRouterState state) => const ContactScreen(),
+    ),
+    GoRoute(
+      path: '/news-archive', // Route for the list of all news
+      builder: (BuildContext context, GoRouterState state) => const NewsArchiveScreen(),
+    ),
+    GoRoute(
+      path: '/news/:id', // Route for a single news item, ":id" is a path parameter
+      builder: (BuildContext context, GoRouterState state) {
+        // Extract the 'id' parameter from the route state
+        final String newsId = state.pathParameters['id'] ?? 'error'; // Provide default or handle error
+        if (newsId == 'error') {
+            // Optional: Redirect to error page or show inline error
+             return const NotFoundScreen(message: 'News ID missing in route.');
+        }
+        return NewsDetailScreen(newsId: newsId); // Pass the ID to the screen
+      },
+    ),
+    GoRoute(
+      path: '/jobs', // Main job board listing
+      builder: (BuildContext context, GoRouterState state) => const JobBoardScreen(),
+    ),
+    GoRoute(
+      path: '/jobs/:id', // Detail view for a single job
+      builder: (BuildContext context, GoRouterState state) {
+        final String jobId = state.pathParameters['id'] ?? 'error';
+        if (jobId == 'error') {
+             return const NotFoundScreen(message: 'Job ID missing in route.');
+        }
+        return JobDetailScreen(jobId: jobId); // Pass ID to screen
+      },
+    ),
+     GoRoute(
+      path: '/post-job', // Screen to create a new job posting
+      builder: (BuildContext context, GoRouterState state) => const PostJobScreen(),
     ),
      // Add other routes (e.g., for Job Board, Auth) here later
   ],

@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-// ** REVERT TO STANDARD IMPORT **
+// ** Imports as provided by user **
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+// This import might still cause issues depending on environment, but leaving as requested
 import 'package:carousel_slider/carousel_controller.dart' as carousel_slider;
 
 // Import widgets and theme/colors
 import '../widgets/main_drawer.dart';
 import '../widgets/custom_app_bar.dart';
+import '../models/news_item.dart'; // Import the NewsItem model
+import '../models/job_item.dart'; // Import the JobItem model
+import '../services/api_service.dart'; // Import the ApiService
+import 'package:intl/intl.dart'; // Import for date formatting
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,35 +23,38 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Carousel controller
-  // ** REVERT TO STANDARD DECLARATION AND INSTANTIATION **
-//   final CarouselController _carouselController = CarouselController();
-  final carouselController = CarouselController();  // This will use the one from carousel_slider
-  int _currentCarouselIndex = 0; // To track current slide for indicators
+  // ApiService instance
+  final ApiService _apiService = ApiService(); // Instantiate ApiService
 
-  // --- Data Placeholders ---
-  // Banner Images
+  // Futures for async data
+  late Future<List<NewsItem>> _newsFuture; // Future for News
+  late Future<List<JobItem>> _jobsFuture; // Future for Jobs
+
+  // --- Carousel controller section - Leaving as provided by user ---
+  // This declaration is likely still problematic due to type mismatch,
+  // but kept as requested.
+  final carouselController = CarouselController();
+  int _currentCarouselIndex = 0;
+  // --- End Carousel controller section ---
+
+
+  // Banner Images Placeholder
   final List<String> bannerImagePaths = [
     'assets/images/banner_illustration.png',
-    'assets/images/quicklink_card1.png',
-    'assets/images/cf092734-def4-4a5b-b1b9-2318dea4f3bc.png',
-    'assets/images/quicklink_card4.png',
+    'assets/images/quicklink_card1.png', // Consider replacing with banner images
+    'assets/images/cf092734-def4-4a5b-b1b9-2318dea4f3bc.png', // Consider replacing
+    'assets/images/quicklink_card4.png', // Consider replacing
   ];
 
-  // News Items Placeholder
-  final List<Map<String, String>> newsItems = const [
-    {'title': 'Library Expansion Approved', 'snippet': 'Funding secured for a major expansion project...', 'date': 'Apr 3, 2025'},
-    {'title': 'Road Cleanup Day Success', 'snippet': 'Thanks to all volunteers who helped out last Saturday!', 'date': 'Apr 1, 2025'},
-    {'title': 'New Park Bench Installed', 'snippet': 'Enjoy the new seating near the pond.', 'date': 'Mar 28, 2025'},
-  ];
+  // --- REMOVED Static Placeholder Data for News/Events ---
 
-  // Event Items Placeholder
-  final List<Map<String, String>> eventItems = const [
-    {'title': 'Farmers Market', 'snippet': 'Fresh local produce and crafts. Every Friday morning.', 'date': 'Next: Apr 5'},
-    {'title': 'Village Council Meeting', 'snippet': 'Open session to discuss community matters.', 'date': 'Apr 10, 7 PM'},
-    {'title': 'Book Club Gathering', 'snippet': 'Discussing "The Midnight Library" at the community hall.', 'date': 'Apr 15, 6 PM'},
-  ];
-  // --- End Data Placeholders ---
+  @override
+  void initState() {
+    super.initState();
+    // Initialize API calls in initState
+    _newsFuture = _apiService.fetchNews(); // Fetch news data
+    _jobsFuture = _apiService.fetchOpenJobs(); // Fetch job data
+  }
 
 
   @override
@@ -61,7 +70,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final bool isWideScreen = screenWidth > 800;
 
     return Scaffold(
-      backgroundColor: Color(0xFFD4C4AF),
+      // ** Using background color from user's code **
+      backgroundColor: const Color(0xFFD4C4AF),
       appBar: const CustomAppBar(),
       drawer: const MainDrawer(),
       body: SingleChildScrollView(
@@ -76,7 +86,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 40),
                 _buildHighlightsSection(context, textTheme, colorScheme),
                 const SizedBox(height: 50),
-                _buildNewsAndEventsSection(context, textTheme, colorScheme, isWideScreen),
+                // Pass the _newsFuture down
+                _buildNewsAndEventsSection(context, textTheme, colorScheme, isWideScreen, _newsFuture),
+                const SizedBox(height: 50), // Add extra space before jobs section
+                // Add the new Jobs section
+                _buildJobsSection(context, textTheme, colorScheme, isWideScreen, _jobsFuture),
                 const SizedBox(height: 30),
               ],
             ),
@@ -86,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- Banner Carousel Widget ---
+  // --- Banner Carousel Widget (Keeping user's provided code state) ---
   Widget _buildBannerCarousel(BuildContext context) {
     if (bannerImagePaths.isEmpty) {
       return Container(
@@ -98,8 +112,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       children: [
         CarouselSlider.builder(
-          // Pass the controller
-        //   carouselController: carouselController,
+          // Controller line commented out as in user's provided code
+          // carouselController: carouselController,
           options: CarouselOptions(
             height: 350,
             autoPlay: bannerImagePaths.length > 1,
@@ -157,7 +171,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- Highlights Section Widget ---
+  // --- Highlights Section Widget (Keeping user's provided code state) ---
   Widget _buildHighlightsSection(BuildContext context, TextTheme textTheme, ColorScheme colorScheme) {
      return Column(
        crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,8 +232,8 @@ class _HomeScreenState extends State<HomeScreen> {
      );
   }
 
- // --- News & Events Section Widget ---
-  Widget _buildNewsAndEventsSection(BuildContext context, TextTheme textTheme, ColorScheme colorScheme, bool isWide) {
+ // --- News & Events Section Widget (FIXED FutureBuilder integration) ---
+  Widget _buildNewsAndEventsSection(BuildContext context, TextTheme textTheme, ColorScheme colorScheme, bool isWide, Future<List<NewsItem>> newsFuture) { // Accept future
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -231,63 +245,311 @@ class _HomeScreenState extends State<HomeScreen> {
           ? Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: _buildNewsEventColumn(context, textTheme, colorScheme, 'Latest News', newsItems, '/community-hub')),
+                // News Column uses FutureBuilder directly
+                Expanded(child: _buildNewsColumnWithFuture(context, textTheme, colorScheme, newsFuture)), // Pass future
                 const SizedBox(width: 30),
-                Expanded(child: _buildNewsEventColumn(context, textTheme, colorScheme, 'Upcoming Events', eventItems, '/community-hub')),
+                // Events column uses placeholder data for now
+                Expanded(child: _buildPlaceholderEventsColumn(context, textTheme, colorScheme)),
               ],
             )
           : Column(
               children: [
-                 _buildNewsEventColumn(context, textTheme, colorScheme, 'Latest News', newsItems, '/community-hub'),
+                 // News Column uses FutureBuilder directly
+                 _buildNewsColumnWithFuture(context, textTheme, colorScheme, newsFuture), // Pass future
                  const SizedBox(height: 30),
-                 _buildNewsEventColumn(context, textTheme, colorScheme, 'Upcoming Events', eventItems, '/community-hub'),
+                 // Events column uses placeholder data for now
+                 _buildPlaceholderEventsColumn(context, textTheme, colorScheme),
               ],
             ),
       ],
     );
   }
 
-  // Helper Column builder
-  Widget _buildNewsEventColumn(BuildContext context, TextTheme textTheme, ColorScheme colorScheme, String title, List<Map<String, String>> items, String viewAllRoute) {
+  // --- NEW Jobs Section Widget ---
+  Widget _buildJobsSection(BuildContext context, TextTheme textTheme, ColorScheme colorScheme, bool isWide, Future<List<JobItem>> jobsFuture) {
     return Column(
-       crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: textTheme.titleLarge),
-        const SizedBox(height: 15),
-        if (items.isEmpty)
-          Padding(
-             padding: const EdgeInsets.symmetric(vertical: 20.0),
-             child: Text('No items to display.', style: textTheme.bodyMedium),
-          )
-        else
-          ...items.take(2).map((item) => Padding(
-            padding: const EdgeInsets.only(bottom: 12.0),
-            child: _buildNewsEventCard(context, textTheme, colorScheme, item['title']!, item['snippet']!, item['date']!),
-          )).toList(),
-        const SizedBox(height: 10),
-        if (items.isNotEmpty)
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () => context.go(viewAllRoute),
-              child: const Text('View All'),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('JOBS & OPPORTUNITIES', style: textTheme.headlineSmall),
+            IconButton(
+              icon: const Icon(Icons.work_outline),
+              onPressed: () => context.go('/jobs'),
+              tooltip: 'View All Jobs',
             ),
-          )
+          ],
+        ),
+        Container(
+            height: 2, width: 100, color: colorScheme.secondary, margin: const EdgeInsets.only(top: 4, bottom: 20)),
+        
+        // Use FutureBuilder directly for jobs
+        FutureBuilder<List<JobItem>>(
+          future: jobsFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: Padding(padding: EdgeInsets.all(20.0), child: CircularProgressIndicator()));
+            } else if (snapshot.hasError) {
+              print("Error loading jobs for home screen: ${snapshot.error}");
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    children: [
+                      Text('Could not load job opportunities.', style: textTheme.bodyMedium),
+                      const SizedBox(height: 10),
+                      TextButton.icon(
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Retry'),
+                        onPressed: () {
+                          setState(() {
+                            _jobsFuture = _apiService.fetchOpenJobs();
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+              final jobsList = snapshot.data!;
+              return isWide
+                  ? _buildWideJobsGrid(context, textTheme, colorScheme, jobsList)
+                  : _buildNarrowJobsList(context, textTheme, colorScheme, jobsList);
+            } else {
+              // No jobs found
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    children: [
+                      Text('No current job opportunities.', style: textTheme.bodyMedium),
+                      const SizedBox(height: 10),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.add_circle_outline),
+                        label: const Text('Post a Job'),
+                        onPressed: () => context.go('/post-job'),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+          },
+        ),
+        
+        const SizedBox(height: 16),
+        // View All Button (outside FutureBuilder, shown regardless of items)
+        _buildViewAllButton(context, 'View All Jobs', '/jobs'),
       ],
     );
   }
 
-  // Helper Card builder
-  Widget _buildNewsEventCard(BuildContext context, TextTheme textTheme, ColorScheme colorScheme, String title, String snippet, String date) {
+  // Helper for wide screen jobs display
+  Widget _buildWideJobsGrid(BuildContext context, TextTheme textTheme, ColorScheme colorScheme, List<JobItem> jobs) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16.0,
+        mainAxisSpacing: 16.0,
+        childAspectRatio: 2.5, // Wider aspect ratio for job cards
+      ),
+      itemCount: jobs.length > 4 ? 4 : jobs.length, // Show only up to 4 jobs
+      itemBuilder: (context, index) {
+        return _buildJobPreviewCard(context, textTheme, colorScheme, jobs[index]);
+      },
+    );
+  }
+
+  // Helper for narrow screen jobs display
+  Widget _buildNarrowJobsList(BuildContext context, TextTheme textTheme, ColorScheme colorScheme, List<JobItem> jobs) {
+    return Column(
+      children: jobs.take(3).map((job) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12.0),
+          child: _buildJobPreviewCard(context, textTheme, colorScheme, job),
+        );
+      }).toList(),
+    );
+  }
+
+  // Job card design for the home screen preview
+  Widget _buildJobPreviewCard(BuildContext context, TextTheme textTheme, ColorScheme colorScheme, JobItem job) {
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context.go('/jobs/${job.id}'), // Navigate to job detail
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      job.title,
+                      style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (job.paymentDetails != null && job.paymentDetails!.isNotEmpty)
+                    Expanded(
+                      flex: 1,
+                      child: Text(
+                        job.paymentDetails!,
+                        style: textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.primary,
+                        ),
+                        textAlign: TextAlign.end,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                job.description,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today_outlined, size: 14, color: colorScheme.onSurfaceVariant),
+                      const SizedBox(width: 4),
+                      Text(
+                        DateFormat('MMM d, y').format(job.createdAt),
+                        style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
+                  Icon(Icons.arrow_forward, size: 16, color: colorScheme.primary),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- Helper for News Column using FutureBuilder ---
+  Widget _buildNewsColumnWithFuture(BuildContext context, TextTheme textTheme, ColorScheme colorScheme, Future<List<NewsItem>> future) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Latest News', style: textTheme.titleLarge),
+        const SizedBox(height: 15),
+        // *** INTEGRATED FutureBuilder HERE ***
+        FutureBuilder<List<NewsItem>>(
+          future: future, // <-- PASS THE FUTURE HERE
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: Padding(padding: EdgeInsets.all(20.0), child: CircularProgressIndicator()));
+            } else if (snapshot.hasError) {
+              print("Error loading news for home screen: ${snapshot.error}");
+              return Center(child: Padding(padding: const EdgeInsets.all(20.0), child: Text('Could not load news.', style: textTheme.bodyMedium)));
+            } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+              final newsList = snapshot.data!;
+              return Column( // Wrap list items in a Column
+                children: newsList.take(2).map((newsItem) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: _buildNewsEventCard(
+                      context, textTheme, colorScheme,
+                      newsItem.title,
+                      newsItem.content ?? 'No preview available.',
+                      DateFormat('MMM d, yyyy').format(newsItem.publishedAt),
+                      newsId: newsItem.id // Pass the real ID
+                  ),
+                )).toList(),
+              );
+            } else {
+              return const Center(child: Padding(padding: EdgeInsets.all(20.0), child: Text('No recent news.')));
+            }
+          },
+        ),
+        // ------------------------------------
+        const SizedBox(height: 10),
+        // View All Button (outside FutureBuilder, shown regardless of items)
+        _buildViewAllButton(context, 'View All News', '/news-archive'),
+      ],
+    );
+  }
+
+
+  // --- Placeholder Helper for Events Column ---
+  Widget _buildPlaceholderEventsColumn(BuildContext context, TextTheme textTheme, ColorScheme colorScheme) {
+     // Using placeholder data defined in user's provided code state
+     final List<Map<String, String>> placeholderEvents = const [
+       {'title': 'Farmers Market', 'snippet': 'Fresh local produce and crafts. Every Friday morning.', 'date': 'Next: Apr 5'},
+       {'title': 'Village Council Meeting', 'snippet': 'Open session to discuss community matters.', 'date': 'Apr 10, 7 PM'},
+     ];
+
+     return Column(
+       crossAxisAlignment: CrossAxisAlignment.start,
+       children: [
+          Text('Upcoming Events', style: textTheme.titleLarge),
+          const SizedBox(height: 15),
+          // Use the placeholder data directly
+          if (placeholderEvents.isEmpty)
+            Padding(
+               padding: const EdgeInsets.symmetric(vertical: 20.0),
+               child: Text('No upcoming events listed.', style: textTheme.bodyMedium),
+            )
+          else
+            ...placeholderEvents.take(2).map((item) => Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: _buildNewsEventCard(
+                context, textTheme, colorScheme,
+                item['title']!, item['snippet']!, item['date']!,
+                // No newsId for placeholder events
+              ),
+            )).toList(),
+          const SizedBox(height: 10),
+          // Use the View All Button helper
+          _buildViewAllButton(context, 'View All Events', '/community-hub'), // Link to hub for now
+       ],
+     );
+   }
+
+  // Helper for individual News/Event Card
+  Widget _buildNewsEventCard(BuildContext context, TextTheme textTheme, ColorScheme colorScheme, String title, String snippet, String date, {String? newsId}) {
+    // Keeping user's provided code state for this helper
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () { /* Navigate to detail */ },
+        onTap: () {
+             // ** NAVIGATE IF NEWS ID IS PROVIDED **
+           if (newsId != null) {
+             context.go('/news/$newsId'); // Navigate to detail page
+           } else {
+             // Handle tap for events or other types later
+             print('Tapped on non-news item or item without ID');
+             // Example: context.go('/event/$eventId');
+           }
+        },
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
+          child: Column( // Using Column as in user's code
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(title, style: textTheme.titleMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -298,7 +560,10 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 8),
               Align(
                  alignment: Alignment.centerRight,
-                 child: Icon(Icons.arrow_forward, size: 16, color: colorScheme.primary),
+                 // Conditionally show arrow
+                 child: newsId != null
+                    ? Icon(Icons.arrow_forward, size: 16, color: colorScheme.primary)
+                    : const SizedBox(height: 16) // Placeholder to maintain height if no arrow
                ),
             ],
           ),
@@ -306,5 +571,21 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
+   // "View All" Button Helper
+  Widget _buildViewAllButton(BuildContext context, String text, String route) {
+     return Align(
+       alignment: Alignment.centerRight,
+       child: Padding(
+         padding: const EdgeInsets.only(top: 10.0),
+         child: TextButton(
+           onPressed: () {
+              context.go(route);
+           },
+           child: Text(text),
+         ),
+       ),
+     );
+   }
 
 } // End of _HomeScreenState class

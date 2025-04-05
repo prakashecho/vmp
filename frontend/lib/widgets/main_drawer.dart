@@ -60,6 +60,7 @@ class MainDrawer extends StatelessWidget {
           _buildDrawerItem(context, Icons.info_outline, 'About Vemulapally', '/about'),
           _buildDrawerItem(context, Icons.photo_library_outlined, 'Gallery', '/gallery'),
           _buildDrawerItem(context, Icons.contact_mail_outlined, 'Contact', '/contact'),
+          _buildDrawerItem(context, Icons.work_outline, 'Job Board', '/jobs'),
 
           // --- Optional Divider ---
           const Divider(height: 20, thickness: 1),

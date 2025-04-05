@@ -16,6 +16,7 @@ type Config struct {
 	SupabaseServiceKey string `mapstructure:"SUPABASE_SERVICE_KEY"` // Secret key!
 	DatabaseURL        string `mapstructure:"DATABASE_URL"`         // PostgreSQL connection string
 	CorsAllowedOrigins string `mapstructure:"CORS_ALLOWED_ORIGINS"`
+	GinMode            string `mapstructure:"GIN_MODE"`
 }
 
 // LoadConfig reads configuration from file or environment variables.
