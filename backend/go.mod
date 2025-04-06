@@ -5,7 +5,6 @@ go 1.24.1
 require (
 	github.com/gin-contrib/cors v1.7.4
 	github.com/gin-gonic/gin v1.10.0
-	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.4
 	github.com/spf13/viper v1.20.1
 )
